@@ -1,0 +1,3 @@
+[submodule "FunEngine2D"]
+	path = FunEngine2D
+	url = https://github.com/NightJolt/FunEngine2D
