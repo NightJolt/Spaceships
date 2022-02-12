@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.22.0)
 set(PROJECT_NAME Spaceships)
 set(CMAKE_CXX_STANDARD 20)
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
 
     # NEEDS UPDATE!
 
