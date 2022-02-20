@@ -143,7 +143,7 @@ void make_spaceship(sf::Vector2f position) {
     fun::ecs::add_component <fun::Transform> (spaceship, position, 0);
     fun::ecs::add_component <Controller> (spaceship, 30.f, 3.f);
     fun::ecs::add_component <sf::Sprite> (spaceship, texture);
-    fun::ecs::add_component <fun::Particler> (spaceship, fun::Particler::RenderType::Quads, 1000000, 8);
+    fun::ecs::add_component <fun::Particler> (spaceship, fun::Particler::RenderType::Quads, 1000000, 1);
 
     auto& sprite = fun::ecs::get_component <sf::Sprite> (spaceship);
     sprite.setOrigin(radius, radius);
@@ -190,16 +190,6 @@ struct DebugData {
 
 
 int main () {
-    // {
-    //     fun::Particler particler(fun::Particler::RenderType::Quads, 1000000, fun::Particler::MAX_SUPPORTED_THREAD_COUNT);
-
-    //     particler.Emit(100, fun::Particler::EmitData());
-
-    //     while (true) { particler.Update(); }
-    // }
-
-    // return 0;
-
     fun::wndmgr::init(fun::wndmgr::WindowData("Spaceships"));
     auto* window = fun::wndmgr::main_window;
 
@@ -265,10 +255,15 @@ int main () {
             if (abs(body.b2body->GetLinearVelocity().x) + abs(body.b2body->GetLinearVelocity().y) > 0) {
                 fun::Particler::EmitData emit_data;
 
-                // emit_data.min_direction_angle = fun::math::radians(160);
-                // emit_data.max_direction_angle = fun::math::radians(200);
-                // emit_data.max_velocity_start = 100.f;
-                // emit_data.max_size_start = 5.f;
+                emit_data.min_lifetime = .5f;
+                emit_data.min_lifetime = 1.f;
+                emit_data.min_direction_angle = fun::math::radians(160);
+                emit_data.max_direction_angle = fun::math::radians(200);
+                emit_data.min_velocity_start = 1.f;
+                emit_data.max_velocity_start = 1000.f;
+                emit_data.min_velocity_end = 0.f;
+                emit_data.max_velocity_end = .1f;
+                emit_data.max_size_start = 5.f;
 
                 particler.Emit(20, emit_data);
             }
