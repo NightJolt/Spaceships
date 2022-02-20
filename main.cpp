@@ -10,6 +10,8 @@
 #include "FunEngine2D/experimental/include/networking/Server.h"
 #include "FunEngine2D/experimental/include/ecs/ECS.h"
 #include "FunEngine2D/experimental/include/physics/Physics.h"
+#include "FunEngine2D/experimental/include/interactable/Interaction.h"
+#include "FunEngine2D/experimental/include/interactable/Interactable.h"
 
 
 
@@ -209,6 +211,7 @@ int main () {
     while (window->render.isOpen()) {
         fun::time::recalculate();
         fun::input::listen();
+        fun::interaction::update();
         fun::wndmgr::update();
 
         for (auto& controller : fun::ecs::iterate_component <Controller> ()) {
@@ -283,7 +286,7 @@ int main () {
 
             shader->setUniform("width", (float)win_size.x);
             shader->setUniform("height", (float)win_size.y);
-            shader->setUniform("pixelate", .4f);
+            shader->setUniform("pixelate", .4f * window->zoom);
         }
 
         window->Display(sf::Color::White, shader);
