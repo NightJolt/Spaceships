@@ -50,6 +50,7 @@ elseif (WIN32)
 
         main.cpp
 
+        header/*.h
         source/*.cpp
     )
 

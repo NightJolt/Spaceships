@@ -6,12 +6,12 @@
 #include "FunEngine2D/core/include/tools/Debugger.h"
 #include "FunEngine2D/core/include/render/shapes/Particler.h"
 
-#include "FunEngine2D/experimental/include/networking/Client.h"
-#include "FunEngine2D/experimental/include/networking/Server.h"
-#include "FunEngine2D/experimental/include/ecs/ECS.h"
-#include "FunEngine2D/experimental/include/physics/Physics.h"
-#include "FunEngine2D/experimental/include/interactable/Interaction.h"
-#include "FunEngine2D/experimental/include/interactable/Interactable.h"
+#include "FunEngine2D/core/include/networking/Client.h"
+#include "FunEngine2D/core/include/networking/Server.h"
+#include "FunEngine2D/core/include/ecs/ECS.h"
+#include "FunEngine2D/core/include/physics/Physics.h"
+#include "FunEngine2D/core/include/interactable/Interaction.h"
+#include "FunEngine2D/core/include/interactable/Interactable.h"
 
 
 
@@ -32,7 +32,7 @@ struct Body {
     }
 
     static void OnCreate(Body& body) {
-        body.entity = fun::ecs::get_entity <Body> (&body);
+        body.entity = fun::ecs::get_entity <Body> (body);
     }
     
     static void OnDestroy(Body& body) {
@@ -88,7 +88,7 @@ struct Controller {
     }
 
     static void OnCreate(Controller& controller) {
-        controller.entity = fun::ecs::get_entity <Controller> (&controller);
+        controller.entity = fun::ecs::get_entity <Controller> (controller);
     }
 
     void Update() {
@@ -233,7 +233,7 @@ int main () {
         window->world_view.move(fun::input::keyboard_2d() * sf::Vector2f(1, -1) * window->zoom * 200.f * fun::time::delta_time());
 
         for (auto& sprite : fun::ecs::iterate_component <sf::Sprite> ()) {
-            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity <sf::Sprite> (&sprite));
+            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity <sf::Sprite> (sprite));
 
             sprite.setPosition(transform.position * sf::Vector2f(1, -1));
             sprite.setRotation(fun::math::degrees(transform.rotation));
@@ -242,7 +242,7 @@ int main () {
         }
 
         for (auto& rect : fun::ecs::iterate_component <sf::RectangleShape> ()) {
-            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity <sf::RectangleShape> (&rect));
+            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity <sf::RectangleShape> (rect));
 
             rect.setPosition(transform.position * sf::Vector2f(1, -1));
             rect.setRotation(-fun::math::degrees(transform.rotation)); // ! ? -
@@ -251,8 +251,8 @@ int main () {
         }
 
         for (auto& particler : fun::ecs::iterate_component <fun::Particler> ()) {
-            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity (&particler));
-            auto& body = fun::ecs::get_component <Body> (fun::ecs::get_entity (&particler));
+            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity (particler));
+            auto& body = fun::ecs::get_component <Body> (fun::ecs::get_entity (particler));
 
             particler.transform = transform;
 
