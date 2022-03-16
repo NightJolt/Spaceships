@@ -1,8 +1,11 @@
-#include "FunEngine2D/core/include/Globals.h"
+#include "FunEngine2D/core/include/globals.h"
+
+#include "FunEngine2D/core/include/vec2.h"
+#include "FunEngine2D/core/include/transform.h"
 #include "FunEngine2D/core/include/render/WindowManager.h"
-#include "FunEngine2D/core/include/Resources.h"
+#include "FunEngine2D/core/include/resources.h"
 #include "FunEngine2D/core/include/_Time.h"
-#include "FunEngine2D/core/include/Input.h"
+#include "FunEngine2D/core/include/input.h"
 #include "FunEngine2D/core/include/tools/Debugger.h"
 #include "FunEngine2D/core/include/render/shapes/Particler.h"
 
@@ -10,8 +13,8 @@
 #include "FunEngine2D/core/include/networking/Server.h"
 #include "FunEngine2D/core/include/ecs/ECS.h"
 #include "FunEngine2D/core/include/physics/Physics.h"
-#include "FunEngine2D/core/include/interactable/Interaction.h"
-#include "FunEngine2D/core/include/interactable/Interactable.h"
+#include "FunEngine2D/core/include/interact/Interaction.h"
+#include "FunEngine2D/core/include/interact/Interactable.h"
 
 
 
@@ -20,41 +23,42 @@
 
 
 
-struct Body {
-    fun::ecs::Entity entity = fun::ecs::NULLENTITY;
+
+struct body_t {
+    fun::ecs::entity_t entity = fun::ecs::nullentity;
 
     b2Body* b2body = nullptr;
 
-    Body(const b2BodyDef& body_def, const b2FixtureDef& fixture) {
+    body_t(const b2BodyDef& body_def, const b2FixtureDef& fixture) {
         b2body = fun::physics::create_body(body_def);
 
         b2body->CreateFixture(&fixture);
     }
 
-    static void OnCreate(Body& body) {
-        body.entity = fun::ecs::get_entity <Body> (body);
+    static void on_create(body_t& body) {
+        body.entity = fun::ecs::get_entity <body_t> (body);
     }
     
-    static void OnDestroy(Body& body) {
+    static void on_destroy(body_t& body) {
         fun::physics::destroy_body(body.b2body);
     }
 
-    sf::Vector2f GetForwardVector() {
+    fun::vec2f_t get_forward_vector() {
         float radians = b2body->GetAngle();
 
-        return sf::Vector2f(sin(radians), cos(radians));
+        return fun::vec2f_t(sin(radians), cos(radians));
     }
 
-    void SetLinearVelocity(sf::Vector2f velocity) {
+    void set_linear_velocity(fun::vec2f_t velocity) {
         b2body->SetLinearVelocity({ velocity.x, velocity.y });
     }
 
-    void SetAngularVelocity(float delta) {
+    void set_angular_velocity(float delta) {
         b2body->SetAngularVelocity(delta);
     }
 
-    void BeforeResolve() {
-        auto& transform = fun::ecs::get_component <fun::Transform> (entity);
+    void before_resolve() {
+        auto& transform = fun::ecs::get_component <fun::transform_t> (entity);
 
         float simulation_scale = fun::physics::get_simulation_scale();
         b2Vec2 b2position = { transform.position.x * simulation_scale, transform.position.y * simulation_scale };
@@ -64,43 +68,43 @@ struct Body {
         b2body->SetTransform(b2position, transform.rotation);
     }
 
-    void AfterResolve() {
-        auto& transform = fun::ecs::get_component <fun::Transform> (entity);
+    void after_resolve() {
+        auto& transform = fun::ecs::get_component <fun::transform_t> (entity);
 
         float simulation_scale = fun::physics::get_simulation_scale();
         b2Vec2 b2position = b2body->GetPosition();
-        sf::Vector2f position = { b2position.x / simulation_scale, b2position.y / simulation_scale };
+        fun::vec2f_t position = { b2position.x / simulation_scale, b2position.y / simulation_scale };
 
         transform.position = position;
         transform.rotation = b2body->GetAngle();
     }
 };
 
-struct Controller {
-    fun::ecs::Entity entity = fun::ecs::NULLENTITY;
+struct controller_t {
+    fun::ecs::entity_t entity = fun::ecs::nullentity;
 
     float speed;
     float torque;
 
-    explicit Controller(float s, float t) {
+    explicit controller_t(float s, float t) {
         speed = s;
         torque = t;
     }
 
-    static void OnCreate(Controller& controller) {
-        controller.entity = fun::ecs::get_entity <Controller> (controller);
+    static void on_create(controller_t& controller) {
+        controller.entity = fun::ecs::get_entity <controller_t> (controller);
     }
 
     void Update() {
-        if (!fun::ecs::has_component <Body> (entity)) return;
+        if (!fun::ecs::has_component <body_t> (entity)) return;
 
-        auto& body = fun::ecs::get_component <Body> (entity);
+        auto& body = fun::ecs::get_component <body_t> (entity);
 
         float vertical = fun::input::vertical(sf::Keyboard::Down, sf::Keyboard::Up);
         float horizontal = fun::input::horizontal(sf::Keyboard::Left, sf::Keyboard::Right);
 
-        body.SetAngularVelocity(horizontal * torque);
-        body.SetLinearVelocity(vertical * body.GetForwardVector() * speed);
+        body.set_angular_velocity(horizontal * torque);
+        body.set_linear_velocity(body.get_forward_vector() * vertical * speed);
     }
 };
 
@@ -117,13 +121,13 @@ void load_resources() {
 }
 
 void create_callbacks() {
-    fun::ecs::oncreate_callback <Controller> (Controller::OnCreate);
-    fun::ecs::oncreate_callback <Body> (Body::OnCreate);
+    fun::ecs::oncreate_callback <controller_t> (controller_t::on_create);
+    fun::ecs::oncreate_callback <body_t> (body_t::on_create);
 
-    fun::ecs::ondestroy_callback <Body> (Body::OnDestroy);
+    fun::ecs::ondestroy_callback <body_t> (body_t::on_destroy);
 }
 
-void make_spaceship(sf::Vector2f position) {
+void make_spaceship(fun::vec2f_t position) {
     auto spaceship = fun::ecs::new_entity();
 
     auto& texture = fun::resources::get_texture("spaceship");
@@ -142,9 +146,9 @@ void make_spaceship(sf::Vector2f position) {
     b2FixtureDef fixture;
     fixture.shape = &shape;
 
-    fun::ecs::add_component <Body> (spaceship, body, fixture);
-    fun::ecs::add_component <fun::Transform> (spaceship, position, 0);
-    fun::ecs::add_component <Controller> (spaceship, 30.f, 3.f);
+    fun::ecs::add_component <body_t> (spaceship, body, fixture);
+    fun::ecs::add_component <fun::transform_t> (spaceship, position, 0);
+    fun::ecs::add_component <controller_t> (spaceship, 30.f, 3.f);
     fun::ecs::add_component <sf::Sprite> (spaceship, texture);
     fun::ecs::add_component <fun::Particler> (spaceship, fun::Particler::RenderType::Quads, 1000000, 1);
 
@@ -152,10 +156,10 @@ void make_spaceship(sf::Vector2f position) {
     sprite.setOrigin(radius, radius);
 }
 
-void make_barrier(sf::Vector2f position) {
+void make_barrier(fun::vec2f_t position) {
     auto barrier = fun::ecs::new_entity();
 
-    sf::Vector2f half_scale = { 10.f, 50.f };
+    fun::vec2f_t half_scale = { 10.f, 50.f };
 
     b2BodyDef body;
     body.position.Set(position.x * fun::physics::get_simulation_scale(), position.y * fun::physics::get_simulation_scale());
@@ -171,14 +175,14 @@ void make_barrier(sf::Vector2f position) {
     fixture.density = 1.0f;
     fixture.friction = 0.3f;
 
-    fun::ecs::add_component <Body> (barrier, body, fixture);
-    fun::ecs::add_component <fun::Transform> (barrier, position, 0);
-    fun::ecs::add_component <sf::RectangleShape> (barrier, half_scale * 2.f);
+    fun::ecs::add_component <body_t> (barrier, body, fixture);
+    fun::ecs::add_component <fun::transform_t> (barrier, position, 0);
+    fun::ecs::add_component <sf::RectangleShape> (barrier, (half_scale * 2.f).to_sf());
 
     auto& rect = fun::ecs::get_component <sf::RectangleShape> (barrier);
-    const sf::Vector2f scale = rect.getScale();
+    const fun::vec2f_t scale = rect.getScale();
 
-    rect.setOrigin(half_scale);
+    rect.setOrigin(half_scale.to_sf());
     rect.setFillColor(sf::Color::Black);
 }
 
@@ -214,45 +218,45 @@ int main () {
         fun::interaction::update();
         fun::wndmgr::update();
 
-        for (auto& controller : fun::ecs::iterate_component <Controller> ()) {
+        for (auto& controller : fun::ecs::iterate_component <controller_t> ()) {
             controller.Update();
         }
 
         {
-            for (auto& body : fun::ecs::iterate_component <Body> ()) {
-                body.BeforeResolve();
+            for (auto& body : fun::ecs::iterate_component <body_t> ()) {
+                body.before_resolve();
             }
             
             fun::physics::simulate();
             
-            for (auto& body : fun::ecs::iterate_component <Body> ()) {
-                body.AfterResolve();
+            for (auto& body : fun::ecs::iterate_component <body_t> ()) {
+                body.after_resolve();
             }
         }
 
-        window->world_view.move(fun::input::keyboard_2d() * sf::Vector2f(1, -1) * window->zoom * 200.f * fun::time::delta_time());
+        window->world_view.move((fun::input::keyboard_2d() * fun::vec2f_t(1, -1) * window->zoom * 200.f * fun::time::delta_time()).to_sf());
 
         for (auto& sprite : fun::ecs::iterate_component <sf::Sprite> ()) {
-            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity <sf::Sprite> (sprite));
+            auto& transform = fun::ecs::get_component <fun::transform_t> (fun::ecs::get_entity <sf::Sprite> (sprite));
 
-            sprite.setPosition(transform.position * sf::Vector2f(1, -1));
+            sprite.setPosition((transform.position * fun::vec2f_t(1, -1)).to_sf());
             sprite.setRotation(fun::math::degrees(transform.rotation));
             
             window->DrawWorld(sprite, 10);
         }
 
         for (auto& rect : fun::ecs::iterate_component <sf::RectangleShape> ()) {
-            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity <sf::RectangleShape> (rect));
+            auto& transform = fun::ecs::get_component <fun::transform_t> (fun::ecs::get_entity <sf::RectangleShape> (rect));
 
-            rect.setPosition(transform.position * sf::Vector2f(1, -1));
+            rect.setPosition((transform.position * fun::vec2f_t(1, -1)).to_sf());
             rect.setRotation(-fun::math::degrees(transform.rotation)); // ! ? -
             
             window->DrawWorld(rect, 10);
         }
 
         for (auto& particler : fun::ecs::iterate_component <fun::Particler> ()) {
-            auto& transform = fun::ecs::get_component <fun::Transform> (fun::ecs::get_entity (particler));
-            auto& body = fun::ecs::get_component <Body> (fun::ecs::get_entity (particler));
+            auto& transform = fun::ecs::get_component <fun::transform_t> (fun::ecs::get_entity (particler));
+            auto& body = fun::ecs::get_component <body_t> (fun::ecs::get_entity (particler));
 
             particler.transform = transform;
 
@@ -282,7 +286,7 @@ int main () {
         fun::debugger::display_debug_log();
 
         {
-            const sf::Vector2u win_size = window->render.getSize();
+            const fun::vec2u_t win_size = window->render.getSize();
 
             shader->setUniform("width", (float)win_size.x);
             shader->setUniform("height", (float)win_size.y);
